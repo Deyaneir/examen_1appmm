@@ -1,112 +1,86 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
-import { Collapsible } from '@/components/ui/collapsible';
 import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Collapsible } from '@/components/ui/collapsible';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
 
 export default function TabTwoScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
+    <ScrollView className="flex-1 bg-slate-950">
+      <View className="px-5 pb-10 pt-16">
+        <View className="mb-6 rounded-4xl border border-white/10 bg-white/6 p-6">
+          <Text className="text-xs font-semibold uppercase tracking-[0.4em] text-cyan-300">
+            Explore
+          </Text>
+          <Text className="mt-3 text-4xl font-black text-white">
+            Uniwind en el proyecto
+          </Text>
+          <Text className="mt-4 text-base leading-7 text-slate-300">
+            Esta pantalla conserva el contenido de ejemplo pero ya está maquetada con utilidades de
+            Uniwind.
+          </Text>
+        </View>
+
+        <View className="mb-6 items-center rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+          <IconSymbol size={120} color="#22d3ee" name="chevron.left.forwardslash.chevron.right" />
+        </View>
+
       <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
+        <Text className="text-slate-300">
+          This app has two screens: <Text className="font-semibold text-white">app/(tabs)/index.tsx</Text>{' '}
+          and <Text className="font-semibold text-white">app/(tabs)/explore.tsx</Text>.
+        </Text>
+        <Text className="mt-3 text-slate-300">
+          The layout file in <Text className="font-semibold text-white">app/(tabs)/_layout.tsx</Text>{' '}
           sets up the tab navigator.
-        </ThemedText>
+        </Text>
         <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
+          <Text className="mt-3 text-base font-semibold text-cyan-300">Learn more</Text>
         </ExternalLink>
       </Collapsible>
       <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
+        <Text className="text-slate-300">
           You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
+          <Text className="font-semibold text-white">w</Text> in the terminal running this project.
+        </Text>
       </Collapsible>
       <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
+        <Text className="text-slate-300">
+          For static images, you can use the <Text className="font-semibold text-white">@2x</Text> and{' '}
+          <Text className="font-semibold text-white">@3x</Text> suffixes to provide files for
+          different screen densities.
+        </Text>
         <Image
           source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
+          className="mx-auto mt-4 h-24 w-24"
         />
         <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
+          <Text className="mt-3 text-base font-semibold text-cyan-300">Learn more</Text>
         </ExternalLink>
       </Collapsible>
       <Collapsible title="Light and dark mode components">
-        <ThemedText>
+        <Text className="text-slate-300">
           This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
+          <Text className="font-semibold text-white">useColorScheme()</Text> hook lets you inspect
           what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
+        </Text>
         <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
+          <Text className="mt-3 text-base font-semibold text-cyan-300">Learn more</Text>
         </ExternalLink>
       </Collapsible>
       <Collapsible title="Animations">
-        <ThemedText>
+        <Text className="text-slate-300">
           This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
+          <Text className="font-semibold text-white">components/HelloWave.tsx</Text> component uses
+          react-native-reanimated to create a waving hand animation.
+        </Text>
+        <Text className="mt-3 text-slate-300">
+          The <Text className="font-semibold text-white">components/ParallaxScrollView.tsx</Text>{' '}
+          component provides a parallax effect for the header image.
+        </Text>
       </Collapsible>
-    </ParallaxScrollView>
+      </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});

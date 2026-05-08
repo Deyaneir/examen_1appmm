@@ -1,98 +1,69 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+
+import { DishOptionsCards } from '@/components/dishes/dish-options-cards';
+import { useDishes } from '@/hooks/use-dishes';
+import { useAuth } from '@/providers/auth-provider';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const { userEmail, signOut, isConfigured } = useAuth();
+  const { dishes, isLoading } = useDishes();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  return (
+    <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
+      <View className="px-5 pt-16 pb-12">
+      <Animated.View entering={FadeInUp.duration(500)} className="rounded-4xl border border-gray-200 bg-gray-50 p-6">
+        <Text className="text-xs font-semibold uppercase tracking-[0.4em] text-[#006491]">
+          Home
+        </Text>
+        <Text className="mt-3 text-4xl font-black leading-tight text-[#1A1A1A]">
+          Sesión iniciada con éxito.
+        </Text>
+        <Text className="mt-4 text-base leading-7 text-gray-600">
+          {userEmail ? `Conectado como ${userEmail}.` : 'Tu sesión está activa y el acceso se mantiene con Supabase.'}
+        </Text>
+
+        {!isConfigured ? (
+          <View className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4">
+            <Text className="text-sm leading-6 text-amber-700">
+              Falta configurar Supabase en las variables de entorno.
+            </Text>
+          </View>
+        ) : null}
+
+        <Animated.View entering={FadeInDown.duration(450).delay(120)} className="mt-6 flex-row gap-3">
+          <Pressable
+            onPress={async () => {
+              await signOut();
+            }}
+            className="flex-1 items-center rounded-2xl bg-[#E31837] px-4 py-4 active:bg-[#E31837]/80">
+            <Text className="text-base font-extrabold text-white">Cerrar sesión</Text>
+          </Pressable>
+
+          <Link href="/explore" asChild>
+            <Pressable className="flex-1 items-center rounded-2xl border border-gray-200 bg-white px-4 py-4 active:bg-gray-100">
+              <Text className="text-base font-bold text-[#1A1A1A]">Explorar</Text>
+            </Pressable>
+          </Link>
+        </Animated.View>
+      </Animated.View>
+
+      <Animated.View entering={FadeInDown.duration(500).delay(150)} className="mt-8 rounded-3xl border border-white/10 bg-slate-900/80 px-5 py-4">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1">
+            <Text className="text-sm font-semibold text-slate-400">Platos guardados</Text>
+            <Text className="mt-1 text-base font-bold text-white">
+              {isLoading ? 'Cargando...' : `${dishes.length} platos disponibles`}
+            </Text>
+          </View>
+          {isLoading && <ActivityIndicator color="#22d3ee" />}
+        </View>
+      </Animated.View>
+
+      {/* Dish Options Cards */}
+      <DishOptionsCards />
+      </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
