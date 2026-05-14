@@ -39,7 +39,19 @@ function buildUploadErrorMessage(error: unknown) {
   }
 }
 
-export async function uploadDishImageToSupabase(imageUri: string): Promise<string> {
+function base64ToUint8Array(base64: string) {
+  const binaryString = globalThis.atob(base64);
+  const length = binaryString.length;
+  const bytes = new Uint8Array(length);
+
+  for (let index = 0; index < length; index += 1) {
+    bytes[index] = binaryString.charCodeAt(index);
+  }
+
+  return bytes;
+}
+
+export async function uploadDishImageToSupabase(imageUri: string, imageBase64?: string | null): Promise<string> {
   const hasSupabaseUrl = Boolean(process.env.EXPO_PUBLIC_SUPABASE_URL);
   const hasSupabaseAnonKey = Boolean(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -53,14 +65,24 @@ export async function uploadDishImageToSupabase(imageUri: string): Promise<strin
   }
 
   try {
-    const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
+    let bytes: Uint8Array<ArrayBuffer>;
+
+    if (imageBase64) {
+      console.log('[Supabase Upload] usando base64 del ImagePicker');
+      bytes = base64ToUint8Array(imageBase64);
+    } else {
+      console.log('[Supabase Upload] usando arrayBuffer desde FileSystem');
+      const arrayBuffer = await file.arrayBuffer();
+      bytes = new Uint8Array(arrayBuffer);
+    }
+
     const contentType = file.type || 'image/jpeg';
     const extension = getImageExtension(imageUri, contentType);
     const storageFileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
 
     console.log('[Supabase Upload] nombre final en Storage:', storageFileName);
     console.log('[Supabase Upload] content-type:', contentType);
+    console.log('[Supabase Upload] base64 presente:', Boolean(imageBase64));
     console.log('[Supabase Upload] bytes a subir:', bytes.byteLength);
 
     const { data, error } = await supabase.storage.from(DISH_IMAGE_BUCKET).upload(storageFileName, bytes, {

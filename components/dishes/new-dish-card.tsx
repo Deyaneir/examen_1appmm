@@ -23,6 +23,7 @@ type SelectedLocation = {
 export function NewDishCard({ onSuccess }: NewDishCardProps) {
   const [dishName, setDishName] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
   const [showManualPicker, setShowManualPicker] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -42,8 +43,10 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
         
         result = await ImagePicker.launchCameraAsync({
           mediaTypes: ['images'],
-          allowsEditing: false,
-          quality: 0.8,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 1,
+          base64: true,
         });
       } else {
         // Request gallery permissions
@@ -55,14 +58,17 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
 
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ['images'],
-          allowsEditing: false,
-          quality: 0.8,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 1,
+          base64: true,
         });
       }
 
       if (!result.canceled && result.assets.length > 0) {
         const selectedAsset = result.assets[0];
         setImageUri(selectedAsset.uri);
+        setImageBase64(selectedAsset.base64 ?? null);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -144,7 +150,7 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
 
     setLoading(true);
     try {
-      const photoUri = await uploadDishImageToSupabase(imageUri);
+      const photoUri = await uploadDishImageToSupabase(imageUri, imageBase64);
 
       const locationData = await resolveLocationDetails(selectedLocation);
 
@@ -164,6 +170,7 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
       // Clear form
       setDishName('');
       setImageUri(null);
+      setImageBase64(null);
       setSelectedLocation(null);
       setShowManualPicker(false);
       Alert.alert('Éxito', 'Plato e imagen guardados en Supabase correctamente');

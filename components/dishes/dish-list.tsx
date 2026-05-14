@@ -36,11 +36,12 @@ export function DishList({ dishes, onDeleteDish }: DishListProps) {
                   <Image
                     source={{ uri: dish.photo_uri }}
                     className="h-full w-full"
-                    contentFit="contain"
+                    contentFit="cover"
+                    transition={150}
                     onError={() => handleImageError(dish.id)}
                   />
                 ) : (
-                  <View className="h-full w-full items-center justify-center bg-gray-100">
+                  <View className="h-full w-full items-center justify-center bg-gray-200">
                     <Text className="text-3xl">🍽️</Text>
                   </View>
                 )}
