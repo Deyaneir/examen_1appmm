@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { File } from 'expo-file-system';
 import { useCallback, useEffect, useState } from 'react';
 
+import { uploadDishImageToSupabase } from '@/lib/dish-image-storage';
 import { CreateDishInput, Dish } from '@/types/dish';
 
 const STORAGE_KEY = 'examen_1_dishes';
@@ -71,6 +73,59 @@ async function getStoredDishes() {
   return hydrationPromise;
 }
 
+function isRemoteImageUri(photoUri: string | null) {
+  return Boolean(photoUri && /^https?:\/\//i.test(photoUri));
+}
+
+async function migrateLegacyDishImages(dishes: Dish[]) {
+  let shouldPersist = false;
+
+  const migratedDishes = await Promise.all(
+    dishes.map(async (dish) => {
+      if (isRemoteImageUri(dish.photo_uri) || !dish.photo_uri) {
+        return dish;
+      }
+
+      const localFile = new File(dish.photo_uri);
+
+      if (!localFile.exists) {
+        console.warn('[useDishes] Legacy image file no longer exists:', dish.photo_uri);
+        shouldPersist = true;
+
+        return {
+          ...dish,
+          photo_uri: null,
+        };
+      }
+
+      try {
+        console.log('[useDishes] Migrating legacy image for dish:', dish.id, dish.photo_uri);
+        const publicUrl = await uploadDishImageToSupabase(dish.photo_uri);
+        shouldPersist = true;
+
+        return {
+          ...dish,
+          photo_uri: publicUrl,
+        };
+      } catch (error) {
+        console.error('[useDishes] Failed to migrate legacy image:', dish.id, error);
+        shouldPersist = true;
+
+        return {
+          ...dish,
+          photo_uri: null,
+        };
+      }
+    }),
+  );
+
+  if (shouldPersist) {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(migratedDishes));
+  }
+
+  return migratedDishes;
+}
+
 function publishDishes(nextDishes: Dish[]) {
   dishesCache = nextDishes;
   listeners.forEach((listener) => listener(nextDishes));
@@ -85,8 +140,9 @@ export function useDishes() {
 
     try {
       const storedDishes = await getStoredDishes();
-      setDishes(storedDishes);
-      publishDishes(storedDishes);
+      const normalizedDishes = await migrateLegacyDishImages(storedDishes);
+      setDishes(normalizedDishes);
+      publishDishes(normalizedDishes);
     } finally {
       setIsLoading(false);
     }
