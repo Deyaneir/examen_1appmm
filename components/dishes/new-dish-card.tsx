@@ -1,22 +1,30 @@
 import { useDishes } from '@/hooks/use-dishes';
-import { getLocationData } from '@/hooks/use-location';
-import * as FileSystem from 'expo-file-system/legacy';
+import { uploadDishImageToSupabase } from '@/lib/dish-image-storage';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
+import { LocationMapPicker } from './location-map-picker';
 
 interface NewDishCardProps {
   onSuccess?: () => void;
 }
 
+type SelectedLocation = {
+  latitude: number;
+  longitude: number;
+  source: 'current' | 'manual';
+};
+
 export function NewDishCard({ onSuccess }: NewDishCardProps) {
   const [dishName, setDishName] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
+  const [showManualPicker, setShowManualPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const { addDish } = useDishes();
 
@@ -36,7 +44,6 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
           mediaTypes: ['images'],
           allowsEditing: false,
           quality: 0.8,
-          base64: true,
         });
       } else {
         // Request gallery permissions
@@ -50,19 +57,73 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
           mediaTypes: ['images'],
           allowsEditing: false,
           quality: 0.8,
-          base64: true,
         });
       }
 
       if (!result.canceled && result.assets.length > 0) {
         const selectedAsset = result.assets[0];
         setImageUri(selectedAsset.uri);
-        setImageBase64(selectedAsset.base64 ?? null);
       }
     } catch (error) {
       console.error('Error picking image:', error);
       Alert.alert('Error', 'No se pudo seleccionar la imagen');
     }
+  };
+
+  const useCurrentLocation = async () => {
+    const locationPermission = await Location.requestForegroundPermissionsAsync();
+
+    if (locationPermission.status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Se requiere acceso a la ubicación para usar tu posición actual');
+      return;
+    }
+
+    try {
+      const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+
+      setSelectedLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        source: 'current',
+      });
+      setShowManualPicker(false);
+    } catch (error) {
+      console.error('Error getting current location:', error);
+      Alert.alert('Error', 'No se pudo obtener tu ubicación actual');
+    }
+  };
+
+  const handleManualLocationSelect = (location: { latitude: number; longitude: number }) => {
+    setSelectedLocation({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      source: 'manual',
+    });
+  };
+
+  const resolveLocationDetails = async (location: SelectedLocation) => {
+    try {
+      const reverseGeocode = await Location.reverseGeocodeAsync({
+        latitude: location.latitude,
+        longitude: location.longitude,
+      });
+
+      if (reverseGeocode.length > 0) {
+        const address = reverseGeocode[0];
+
+        return {
+          city: address.city || address.region || null,
+          country: address.country || null,
+        };
+      }
+    } catch (error) {
+      console.warn('Reverse geocoding failed:', error);
+    }
+
+    return {
+      city: null,
+      country: null,
+    };
   };
 
   const handleSaveDish = async () => {
@@ -76,28 +137,25 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
       return;
     }
 
+    if (!selectedLocation) {
+      Alert.alert('Error', 'Selecciona tu ubicación actual o marca un punto en el mapa');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Save the image to the file system using base64
-      const fileName = `dish_${Date.now()}.jpg`;
-      const fileUri = FileSystem.documentDirectory + fileName;
-      if (imageBase64) {
-        await FileSystem.writeAsStringAsync(fileUri, imageBase64, { encoding: 'base64' });
-      } else {
-        throw new Error('Base64 data not available');
-      }
+      const photoUri = await uploadDishImageToSupabase(imageUri);
 
-      // Get location data
-      const locationData = await getLocationData();
+      const locationData = await resolveLocationDetails(selectedLocation);
 
       // Create dish object with new field names
       const newDish = {
         name: dishName.trim(),
-        photo_uri: fileUri,
-        latitude: locationData?.latitude ?? null,
-        longitude: locationData?.longitude ?? null,
-        city: locationData?.city ?? null,
-        country: locationData?.country ?? null,
+        photo_uri: photoUri,
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        city: locationData.city,
+        country: locationData.country,
       };
 
       // Add dish to list
@@ -106,8 +164,9 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
       // Clear form
       setDishName('');
       setImageUri(null);
-      setImageBase64(null);
-      Alert.alert('Éxito', 'Plato guardado correctamente');
+      setSelectedLocation(null);
+      setShowManualPicker(false);
+      Alert.alert('Éxito', 'Plato e imagen guardados en Supabase correctamente');
 
       // Call success callback if provided
       if (onSuccess) {
@@ -115,7 +174,7 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
       }
     } catch (error) {
       console.error('Error saving dish:', error);
-      Alert.alert('Error', 'No se pudo guardar el plato');
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo guardar el plato');
     } finally {
       setLoading(false);
     }
@@ -182,12 +241,65 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
         </View>
       )}
 
+      <View className="mb-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+        <Text className="mb-2 text-sm font-semibold text-slate-200">Ubicación del plato</Text>
+        <Text className="mb-4 text-sm leading-6 text-slate-300">
+          Puedes usar tu ubicación actual o seleccionar manualmente un punto sobre el mapa.
+        </Text>
+
+        <View className="flex-row gap-3">
+          <Pressable
+            onPress={useCurrentLocation}
+            disabled={loading}
+            className="flex-1 rounded-2xl bg-blue-500 px-4 py-3 active:bg-blue-400 disabled:opacity-50"
+          >
+            <Text className="text-center font-bold text-white">Usar ubicación actual</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setShowManualPicker((current) => !current)}
+            disabled={loading}
+            className="flex-1 rounded-2xl bg-cyan-500 px-4 py-3 active:bg-cyan-400 disabled:opacity-50"
+          >
+            <Text className="text-center font-bold text-slate-950">
+              {showManualPicker ? 'Ocultar mapa' : 'Elegir en mapa'}
+            </Text>
+          </Pressable>
+        </View>
+
+        {selectedLocation ? (
+          <View className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
+            <Text className="text-sm font-semibold text-emerald-300">
+              {selectedLocation.source === 'current' ? 'Ubicación actual' : 'Ubicación manual'}
+            </Text>
+            <Text className="mt-1 text-sm text-emerald-100">
+              {selectedLocation.latitude.toFixed(5)}, {selectedLocation.longitude.toFixed(5)}
+            </Text>
+          </View>
+        ) : (
+          <Text className="mt-4 text-sm text-slate-400">Todavía no has seleccionado una ubicación.</Text>
+        )}
+
+        {showManualPicker ? (
+          <View className="mt-4">
+            <LocationMapPicker
+              latitude={selectedLocation?.latitude ?? null}
+              longitude={selectedLocation?.longitude ?? null}
+              onSelectLocation={handleManualLocationSelect}
+            />
+            <Text className="mt-3 text-xs leading-5 text-slate-400">
+              Toca el punto que quieres guardar. El marcador se moverá al lugar exacto.
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
       {/* Save Button */}
       <Pressable
         onPress={handleSaveDish}
-        disabled={loading || !dishName.trim() || !imageUri}
+        disabled={loading || !dishName.trim() || !imageUri || !selectedLocation}
         className={`rounded-2xl px-4 py-3 ${
-          loading || !dishName.trim() || !imageUri
+          loading || !dishName.trim() || !imageUri || !selectedLocation
             ? 'bg-gray-300 dark:bg-gray-600'
             : 'bg-[#E31837] active:bg-[#E31837]/80'
         }`}

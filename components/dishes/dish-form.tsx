@@ -1,7 +1,7 @@
+import { CreateDishInput } from '@/types/dish';
+import * as Location from 'expo-location';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
-
-import { CreateDishInput } from '@/types/dish';
 
 type DishFormProps = {
   onSubmit: (dish: CreateDishInput) => Promise<void>;
@@ -43,8 +43,24 @@ export function DishForm({ onSubmit, isSubmitting = false }: DishFormProps) {
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  async function getCurrentLocation() {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+
+    if (status !== 'granted') {
+      alert('Permiso de ubicación denegado');
+      return;
+    }
+
+    const location = await Location.getCurrentPositionAsync({});
+
+    setLatitude(location.coords.latitude);
+    setLongitude(location.coords.longitude);
+  }
 
   async function handleSubmit() {
     setErrorMessage(null);
@@ -61,6 +77,13 @@ export function DishForm({ onSubmit, isSubmitting = false }: DishFormProps) {
       return;
     }
 
+    const trimmedImageUrl = imageUrl.trim();
+
+    if (trimmedImageUrl && !/^https:\/\//i.test(trimmedImageUrl)) {
+      setErrorMessage('La imagen debe ser una URL HTTPS válida.');
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -69,9 +92,11 @@ export function DishForm({ onSubmit, isSubmitting = false }: DishFormProps) {
         description: description.trim(),
         category: category.trim(),
         price: parsedPrice,
-        imageUrl:
-          imageUrl.trim() ||
-          'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=900&q=80',
+        photo_uri: trimmedImageUrl || null,
+        city: null,
+        country: null,
+        latitude,
+        longitude,
       });
 
       setName('');
@@ -118,6 +143,15 @@ export function DishForm({ onSubmit, isSubmitting = false }: DishFormProps) {
           onChangeText={setImageUrl}
           placeholder="https://..."
         />
+        <Pressable onPress={getCurrentLocation} className="mt-3 rounded-2xl bg-blue-500 px-4 py-4">
+          <Text className="text-center font-bold text-white">Obtener ubicación actual</Text>
+        </Pressable>
+
+        {latitude !== null && longitude !== null ? (
+          <Text className="mt-2 text-sm text-green-400">
+            Ubicación guardada: {latitude.toFixed(4)}, {longitude.toFixed(4)}
+          </Text>
+        ) : null}
       </View>
 
       {errorMessage ? (

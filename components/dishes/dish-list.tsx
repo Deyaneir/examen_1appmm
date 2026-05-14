@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -71,10 +72,24 @@ export function DishList({ dishes, onDeleteDish }: DishListProps) {
                 </View>
 
                 {hasLocation && (
-                  <Text className="mt-3 text-xs text-gray-500" numberOfLines={1}>
-                    📍 {dish.latitude?.toFixed(4)}, {dish.longitude?.toFixed(4)}
-                  </Text>
-                )}
+  <>
+    <Text className="mt-3 text-xs text-gray-500" numberOfLines={1}>
+      📍 {dish.latitude?.toFixed(4)}, {dish.longitude?.toFixed(4)}
+    </Text>
+  </>
+)}
+
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: '/dishes/[id]',
+                      params: { id: dish.id },
+                    })
+                  }
+                  className="mt-3 rounded-xl bg-cyan-500 px-4 py-3"
+                >
+                  <Text className="text-center font-bold text-white">Ver detalle</Text>
+                </Pressable>
 
                 <View className="mt-3 flex-row items-center justify-between border-t border-gray-200 pt-3">
                   <Text className="text-xs text-gray-500">
