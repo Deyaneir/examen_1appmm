@@ -84,7 +84,7 @@ export default function ListDishesScreen() {
               </Text>
               <Text
                 className="mt-1 text-3xl font-black"
-                style={{ color: colors.text }}
+                style={{ color: '#000000' }}
               >
                 {isLoading ? '...' : dishes.length}
               </Text>

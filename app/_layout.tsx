@@ -3,7 +3,8 @@ import '../global.css';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
+import { LogBox } from 'react-native';
 import 'react-native-reanimated';
 
 import { AuthProvider, useAuth } from '@/providers/auth-provider';
@@ -11,6 +12,11 @@ import { AuthProvider, useAuth } from '@/providers/auth-provider';
 export const unstable_settings = {
   anchor: '(auth)',
 };
+
+LogBox.ignoreLogs([
+  'Unable to activate keep awake',
+  'Unable to deactivate keep awake',
+]);
 
 function AuthGate() {
   const { session, isLoading } = useAuth();
@@ -52,7 +58,7 @@ export default function RootLayout() {
     <AuthProvider>
       <ThemeProvider value={DefaultTheme}>
         <AuthGate />
-        <StatusBar style="auto" />
+        <StatusBar style="dark" />
       </ThemeProvider>
     </AuthProvider>
   );

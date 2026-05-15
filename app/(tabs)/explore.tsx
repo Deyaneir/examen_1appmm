@@ -34,7 +34,7 @@ export default function ExploreScreen() {
           </Text>
           <Text
             className="mt-3 text-3xl font-black leading-tight"
-            style={{ color: colors.text }}
+            style={{ color: '#000000' }}
           >
             Descubre Platos
           </Text>
@@ -149,7 +149,7 @@ export default function ExploreScreen() {
         >
           <Text
             className="text-center text-lg font-bold mb-2"
-            style={{ color: colors.text }}
+            style={{ color: '#000000' }}
           >
             ¿Qué puedes hacer?
           </Text>

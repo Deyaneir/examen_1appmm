@@ -32,7 +32,7 @@ export default function DishDetailScreen() {
           <IconSymbol name="info.circle" size={80} color="#006491" />
           <Text
             className="text-xl font-bold text-center mb-2 mt-4"
-            style={{ color: colors.text }}
+            style={{ color: '#000000' }}
           >
             Plato no encontrado
           </Text>
@@ -192,7 +192,7 @@ export default function DishDetailScreen() {
               className="mb-6 rounded-2xl p-4"
               style={{ backgroundColor: colors.gray50 }}
             >
-              <Text className="text-sm" style={{ color: colors.text }}>
+              <Text className="text-sm" style={{ color: '#000000' }}>
                 {dish.description}
               </Text>
             </Animated.View>

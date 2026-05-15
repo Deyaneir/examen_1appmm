@@ -31,6 +31,11 @@ export function LocationMapPicker({ latitude, longitude, onSelectLocation }: Loc
 
           body {
             background: #F3F4F6;
+            overflow: hidden;
+          }
+
+          #map {
+            touch-action: pan-x pan-y;
           }
 
           .hint {
@@ -62,7 +67,7 @@ export function LocationMapPicker({ latitude, longitude, onSelectLocation }: Loc
 
           let marker = null;
 
-          function setSelectedLocation(lat, lng) {
+          function setSelectedLocation(lat, lng, shouldPost = false) {
             if (marker) {
               map.removeLayer(marker);
             }
@@ -71,14 +76,16 @@ export function LocationMapPicker({ latitude, longitude, onSelectLocation }: Loc
             marker.bindPopup('Ubicación seleccionada').openPopup();
             map.setView([lat, lng], Math.max(map.getZoom(), 16));
 
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              latitude: lat,
-              longitude: lng,
-            }));
+            if (shouldPost) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                latitude: lat,
+                longitude: lng,
+              }));
+            }
           }
 
           map.on('click', (event) => {
-            setSelectedLocation(event.latlng.lat, event.latlng.lng);
+            setSelectedLocation(event.latlng.lat, event.latlng.lng, true);
           });
 
           setSelectedLocation(${latitude ?? initialLatitude}, ${longitude ?? initialLongitude});
@@ -90,12 +97,14 @@ export function LocationMapPicker({ latitude, longitude, onSelectLocation }: Loc
   );
 
   return (
-    <View style={{ height: 320, overflow: 'hidden', borderRadius: 24 }}>
+    <View style={{ height: 400, overflow: 'hidden', borderRadius: 24 }}>
       <WebView
         source={{ html }}
         originWhitelist={['*']}
-        javaScriptEnabled
-        domStorageEnabled
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        scrollEnabled={false}
+        bounces={false}
         onMessage={(event) => {
           try {
             const data = JSON.parse(event.nativeEvent.data) as { latitude?: number; longitude?: number };

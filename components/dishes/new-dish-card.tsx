@@ -4,7 +4,7 @@ import { uploadDishImageToSupabase } from '@/lib/dish-image-storage';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, Pressable, Text, TextInput, View } from 'react-native';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
@@ -138,8 +138,8 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
       return;
     }
 
-    if (dishName.trim().length > 10) {
-      Alert.alert('Error', 'El nombre debe tener máximo 10 caracteres');
+    if (dishName.trim().length > 18) {
+      Alert.alert('Error', 'El nombre debe tener máximo 18 caracteres');
       return;
     }
 
@@ -202,19 +202,19 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
     <ThemedView className="mx-4 mb-6 rounded-3xl border border-gray-200 p-6 bg-white shadow-lg shadow-gray-200/50">
       {/* Header */}
       <View className="mb-4 flex-row items-center gap-2">
-        <IconSymbol name="fork.knife" size={24} color="#006491" />
-        <ThemedText type="subtitle" className="font-semibold text-gray-800">
+        <IconSymbol name="fork.knife" size={24} color="#000000" />
+        <ThemedText type="subtitle" className="font-semibold text-black">
           Nuevo Plato
         </ThemedText>
       </View>
 
       {/* Dish Name Input */}
       <TextInput
-        placeholder="Nombre del plato (máx 10 caracteres)..."
+        placeholder="Nombre del plato (máx 18 caracteres)..."
         value={dishName}
         onChangeText={setDishName}
         editable={!loading}
-        maxLength={10}
+        maxLength={18}
         className="mb-4 rounded-2xl border border-gray-300 bg-white px-4 py-3 text-base text-gray-800"
         placeholderTextColor="#999"
       />
@@ -286,12 +286,12 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
           </Pressable>
 
           <Pressable
-            onPress={() => setShowManualPicker((current) => !current)}
+            onPress={() => setShowManualPicker(true)}
             disabled={loading}
             className="flex-1 rounded-2xl bg-[#006491] px-4 py-3 active:bg-[#005078] disabled:opacity-50"
           >
             <Text className="text-center font-bold text-black">
-              {showManualPicker ? 'Ocultar mapa' : 'Elegir en mapa'}
+              Elegir en mapa
             </Text>
           </Pressable>
         </View>
@@ -309,18 +309,34 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
           <Text className="mt-4 text-sm text-[#006491]">Todavía no has seleccionado una ubicación.</Text>
         )}
 
-        {showManualPicker ? (
-          <View className="mt-4">
-            <LocationMapPicker
-              latitude={selectedLocation?.latitude ?? null}
-              longitude={selectedLocation?.longitude ?? null}
-              onSelectLocation={handleManualLocationSelect}
-            />
-            <Text className="mt-3 text-xs leading-5 text-[#006491]">
-              Toca el punto que quieres guardar. El marcador se moverá al lugar exacto.
-            </Text>
+        <Modal visible={showManualPicker} animationType="slide" transparent={false}>
+          <View className="flex-1 bg-white">
+            <View className="flex-row items-center justify-between border-b border-gray-200 px-4 py-4">
+              <Text className="text-lg font-bold text-[#1A1A1A]">Selecciona ubicación</Text>
+              <Pressable
+                onPress={() => setShowManualPicker(false)}
+                className="rounded-full bg-gray-200 p-2 active:bg-gray-300"
+              >
+                <IconSymbol name="close" size={20} color="#1A1A1A" />
+              </Pressable>
+            </View>
+            <View className="flex-1">
+              <LocationMapPicker
+                latitude={selectedLocation?.latitude ?? null}
+                longitude={selectedLocation?.longitude ?? null}
+                onSelectLocation={(location) => {
+                  handleManualLocationSelect(location);
+                  setShowManualPicker(false);
+                }}
+              />
+            </View>
+            <View className="border-t border-gray-200 bg-white p-4">
+              <Text className="text-sm text-[#006491]">
+                Toca el punto que quieres guardar. El marcador se moverá al lugar exacto.
+              </Text>
+            </View>
           </View>
-        ) : null}
+        </Modal>
       </View>
 
       {/* Save Button */}
