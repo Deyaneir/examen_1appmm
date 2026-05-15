@@ -36,11 +36,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { data } = await supabase.auth.getSession();
+      try {
+        const { data, error } = await supabase.auth.getSession();
 
-      if (isMounted) {
-        setSession(data.session ?? null);
-        setIsLoading(false);
+        if (error) {
+          console.warn('Error cargando sesión:', error.message);
+          if (error.message.includes('refresh_token') || error.message.includes('Invalid refresh token')) {
+            await supabase.auth.signOut();
+          }
+        }
+
+        if (isMounted) {
+          setSession(data.session ?? null);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.warn('Error en loadSession:', err);
+        if (isMounted) {
+          setSession(null);
+          setIsLoading(false);
+        }
       }
     }
 

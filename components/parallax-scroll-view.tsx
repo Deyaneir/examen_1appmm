@@ -42,7 +42,7 @@ export default function ParallaxScrollView({
   return (
     <Animated.ScrollView
       ref={scrollRef}
-      className="flex-1 bg-slate-950 dark:bg-slate-900"
+      className="flex-1 bg-[#F3F4F6]"
       scrollEventThrottle={16}>
       <Animated.View className={`h-62.5 overflow-hidden ${headerBackgroundClassName}`} style={headerAnimatedStyle}>
         {headerImage}

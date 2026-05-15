@@ -1,10 +1,10 @@
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useDishes } from '@/hooks/use-dishes';
 import { uploadDishImageToSupabase } from '@/lib/dish-image-storage';
-import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
@@ -138,6 +138,17 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
       return;
     }
 
+    if (dishName.trim().length > 10) {
+      Alert.alert('Error', 'El nombre debe tener máximo 10 caracteres');
+      return;
+    }
+
+    const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+    if (!nameRegex.test(dishName.trim())) {
+      Alert.alert('Error', 'El nombre del plato solo debe contener letras');
+      return;
+    }
+
     if (!imageUri) {
       Alert.alert('Error', 'Por favor captura una foto del plato');
       return;
@@ -173,7 +184,7 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
       setImageBase64(null);
       setSelectedLocation(null);
       setShowManualPicker(false);
-      Alert.alert('Éxito', 'Plato e imagen guardados en Supabase correctamente');
+      Alert.alert('Éxito', 'Registro exitoso');
 
       // Call success callback if provided
       if (onSuccess) {
@@ -188,19 +199,23 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
   };
 
   return (
-    <ThemedView className="mx-4 mb-6 rounded-3xl border border-gray-200 p-6 bg-white dark:bg-gray-800 dark:border-gray-700">
+    <ThemedView className="mx-4 mb-6 rounded-3xl border border-gray-200 p-6 bg-white shadow-lg shadow-gray-200/50">
       {/* Header */}
-      <ThemedText type="subtitle" className="mb-4 font-semibold text-gray-800 dark:text-white">
-        🍽️ Nuevo Plato
-      </ThemedText>
+      <View className="mb-4 flex-row items-center gap-2">
+        <IconSymbol name="fork.knife" size={24} color="#006491" />
+        <ThemedText type="subtitle" className="font-semibold text-gray-800">
+          Nuevo Plato
+        </ThemedText>
+      </View>
 
       {/* Dish Name Input */}
       <TextInput
-        placeholder="Nombre del plato..."
+        placeholder="Nombre del plato (máx 10 caracteres)..."
         value={dishName}
         onChangeText={setDishName}
         editable={!loading}
-        className="mb-4 rounded-2xl border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        maxLength={10}
+        className="mb-4 rounded-2xl border border-gray-300 bg-white px-4 py-3 text-base text-gray-800"
         placeholderTextColor="#999"
       />
 
@@ -211,12 +226,13 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
             <Animated.View entering={ZoomIn.duration(300)}>
               <Image
                 source={{ uri: imageUri }}
-                contentFit="cover"
-                className="h-64 w-full bg-gray-200"
+                style={{ width: '100%', height: 256, backgroundColor: '#E5E7EB' }}
+                resizeMode="cover"
+                onError={(error) => console.warn('[Image Preview] error cargando preview local', error.nativeEvent)}
               />
             </Animated.View>
             <View className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent py-3 px-3">
-              <ThemedText className="text-lg font-semibold text-white">
+              <ThemedText className="text-lg font-semibold text-black">
                 {dishName || 'Nuevo plato'}
               </ThemedText>
             </View>
@@ -232,25 +248,31 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
             disabled={loading}
             className="flex-1 rounded-2xl bg-[#006491] px-4 py-3 active:bg-[#006491]/80 disabled:opacity-50"
           >
-            <ThemedText className="text-center font-semibold text-white">
-              📷 Cámara
-            </ThemedText>
+            <View className="flex-row items-center justify-center gap-2">
+              <IconSymbol name="camera.fill" size={18} color="black" />
+              <ThemedText className="text-center font-semibold text-black">
+                Cámara
+              </ThemedText>
+            </View>
           </Pressable>
           <Pressable
             onPress={() => pickImage('gallery')}
             disabled={loading}
             className="flex-1 rounded-2xl bg-[#006491] px-4 py-3 active:bg-[#006491]/80 disabled:opacity-50"
           >
-            <ThemedText className="text-center font-semibold text-white">
-              🖼️ Galería
-            </ThemedText>
+            <View className="flex-row items-center justify-center gap-2">
+              <IconSymbol name="photo.fill" size={18} color="black" />
+              <ThemedText className="text-center font-semibold text-black">
+                Galería
+              </ThemedText>
+            </View>
           </Pressable>
         </View>
       )}
 
-      <View className="mb-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-        <Text className="mb-2 text-sm font-semibold text-slate-200">Ubicación del plato</Text>
-        <Text className="mb-4 text-sm leading-6 text-slate-300">
+      <View className="mb-4 rounded-2xl border border-gray-200 bg-gray-100 p-4">
+        <Text className="mb-2 text-sm font-semibold text-gray-700">Ubicación del plato</Text>
+        <Text className="mb-4 text-sm leading-6 text-[#006491]">
           Puedes usar tu ubicación actual o seleccionar manualmente un punto sobre el mapa.
         </Text>
 
@@ -258,33 +280,33 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
           <Pressable
             onPress={useCurrentLocation}
             disabled={loading}
-            className="flex-1 rounded-2xl bg-blue-500 px-4 py-3 active:bg-blue-400 disabled:opacity-50"
+            className="flex-1 rounded-2xl bg-[#006491] px-4 py-3 active:bg-[#005078] disabled:opacity-50"
           >
-            <Text className="text-center font-bold text-white">Usar ubicación actual</Text>
+            <Text className="text-center font-bold text-black">Usar ubicación actual</Text>
           </Pressable>
 
           <Pressable
             onPress={() => setShowManualPicker((current) => !current)}
             disabled={loading}
-            className="flex-1 rounded-2xl bg-cyan-500 px-4 py-3 active:bg-cyan-400 disabled:opacity-50"
+            className="flex-1 rounded-2xl bg-[#006491] px-4 py-3 active:bg-[#005078] disabled:opacity-50"
           >
-            <Text className="text-center font-bold text-slate-950">
+            <Text className="text-center font-bold text-black">
               {showManualPicker ? 'Ocultar mapa' : 'Elegir en mapa'}
             </Text>
           </Pressable>
         </View>
 
         {selectedLocation ? (
-          <View className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
-            <Text className="text-sm font-semibold text-emerald-300">
+          <View className="mt-4 rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
+            <Text className="text-sm font-semibold text-green-700">
               {selectedLocation.source === 'current' ? 'Ubicación actual' : 'Ubicación manual'}
             </Text>
-            <Text className="mt-1 text-sm text-emerald-100">
+            <Text className="mt-1 text-sm text-green-600">
               {selectedLocation.latitude.toFixed(5)}, {selectedLocation.longitude.toFixed(5)}
             </Text>
           </View>
         ) : (
-          <Text className="mt-4 text-sm text-slate-400">Todavía no has seleccionado una ubicación.</Text>
+          <Text className="mt-4 text-sm text-[#006491]">Todavía no has seleccionado una ubicación.</Text>
         )}
 
         {showManualPicker ? (
@@ -294,7 +316,7 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
               longitude={selectedLocation?.longitude ?? null}
               onSelectLocation={handleManualLocationSelect}
             />
-            <Text className="mt-3 text-xs leading-5 text-slate-400">
+            <Text className="mt-3 text-xs leading-5 text-[#006491]">
               Toca el punto que quieres guardar. El marcador se moverá al lugar exacto.
             </Text>
           </View>
@@ -307,14 +329,14 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
         disabled={loading || !dishName.trim() || !imageUri || !selectedLocation}
         className={`rounded-2xl px-4 py-3 ${
           loading || !dishName.trim() || !imageUri || !selectedLocation
-            ? 'bg-gray-300 dark:bg-gray-600'
-            : 'bg-[#E31837] active:bg-[#E31837]/80'
+            ? 'bg-gray-300'
+            : 'bg-[#E31837] active:bg-[#c41530]'
         }`}
       >
         {loading ? (
-          <ActivityIndicator color="white" />
+          <ActivityIndicator color="black" />
         ) : (
-          <ThemedText className="text-center font-semibold text-white">
+          <ThemedText className="text-center font-semibold text-black">
             ✓ Guardar Plato
           </ThemedText>
         )}

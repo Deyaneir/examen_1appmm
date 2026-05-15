@@ -3,12 +3,13 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { NewDishCard } from '@/components/dishes/new-dish-card';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export default function RegisterDishScreen() {
   const router = useRouter();
 
   return (
-    <ScrollView className="flex-1 bg-white">
+    <ScrollView className="flex-1 bg-[#F3F4F6]">
       <View className="px-5 pt-12">
         {/* Header */}
         <Animated.View entering={FadeInUp.duration(500)} className="flex-row items-center justify-between">
@@ -24,19 +25,8 @@ export default function RegisterDishScreen() {
             onPress={() => router.back()}
             className="rounded-full bg-gray-200 p-3 active:bg-gray-300"
           >
-            <Text className="text-xl text-[#1A1A1A]">✕</Text>
+            <IconSymbol name="close" size={24} color="#1A1A1A" />
           </Pressable>
-        </Animated.View>
-
-        {/* Instruction */}
-        <Animated.View
-          entering={FadeInUp.duration(500).delay(100)}
-          className="mt-6 rounded-2xl border border-[#006491]/20 bg-[#006491]/5 p-4"
-        >
-          <Text className="text-sm leading-6 text-[#006491]">
-            📸 Captura una foto, y automáticamente se registrarán los datos de tu ubicación
-            (ciudad, país, coordenadas GPS).
-          </Text>
         </Animated.View>
 
         {/* Form Card */}

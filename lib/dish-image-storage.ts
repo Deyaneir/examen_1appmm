@@ -1,6 +1,5 @@
-import { File } from 'expo-file-system';
-
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+import { File as ExpoFile } from 'expo-file-system';
 
 const DISH_IMAGE_BUCKET = 'dish-images';
 
@@ -13,6 +12,23 @@ function getImageExtension(imageUri: string, mimeType: string | null) {
   const match = cleanUri.match(/\.([a-zA-Z0-9]+)$/);
 
   return match?.[1] || 'jpg';
+}
+
+function getMimeType(imageUri: string) {
+  const extension = getImageExtension(imageUri, null).toLowerCase();
+
+  switch (extension) {
+    case 'png':
+      return 'image/png';
+    case 'webp':
+      return 'image/webp';
+    case 'gif':
+      return 'image/gif';
+    case 'jpg':
+    case 'jpeg':
+    default:
+      return 'image/jpeg';
+  }
 }
 
 function logUploadContext(imageUri: string, fileName: string, hasSupabaseUrl: boolean, hasSupabaseAnonKey: boolean) {
@@ -40,12 +56,16 @@ function buildUploadErrorMessage(error: unknown) {
 }
 
 function base64ToUint8Array(base64: string) {
-  const binaryString = globalThis.atob(base64);
-  const length = binaryString.length;
-  const bytes = new Uint8Array(length);
+  const cleanedBase64 = base64.includes('base64,') ? base64.split('base64,')[1] : base64;
+  const binaryString = typeof atob === 'function'
+    ? atob(cleanedBase64)
+    : typeof Buffer !== 'undefined'
+      ? Buffer.from(cleanedBase64, 'base64').toString('binary')
+      : '';
 
-  for (let index = 0; index < length; index += 1) {
-    bytes[index] = binaryString.charCodeAt(index);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i += 1) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
 
   return bytes;
@@ -55,30 +75,42 @@ export async function uploadDishImageToSupabase(imageUri: string, imageBase64?: 
   const hasSupabaseUrl = Boolean(process.env.EXPO_PUBLIC_SUPABASE_URL);
   const hasSupabaseAnonKey = Boolean(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
-  const file = new File(imageUri);
-  const fileName = file.name || `${Date.now()}.jpg`;
+  const cleanUri = imageUri.split('?')[0].split('#')[0];
+  const uriParts = cleanUri.split('/');
+  const fileNameFromUri = uriParts[uriParts.length - 1] || `${Date.now()}.jpg`;
+  const extension = getImageExtension(imageUri, null);
+  const storageFileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
 
-  logUploadContext(imageUri, fileName, hasSupabaseUrl, hasSupabaseAnonKey);
+  logUploadContext(imageUri, fileNameFromUri, hasSupabaseUrl, hasSupabaseAnonKey);
 
   if (!isSupabaseConfigured || !hasSupabaseUrl || !hasSupabaseAnonKey) {
     throw new Error('Supabase no está configurado. Verifica EXPO_PUBLIC_SUPABASE_URL y EXPO_PUBLIC_SUPABASE_ANON_KEY.');
   }
 
   try {
-    let bytes: Uint8Array<ArrayBuffer>;
+    let bytes: Uint8Array;
 
     if (imageBase64) {
       console.log('[Supabase Upload] usando base64 del ImagePicker');
-      bytes = base64ToUint8Array(imageBase64);
+      bytes = await base64ToUint8Array(imageBase64);
+    } else if (/^https?:\/\//i.test(imageUri)) {
+      console.log('[Supabase Upload] usando fetch para leer la imagen remota');
+      const response = await fetch(imageUri);
+
+      if (!response.ok) {
+        throw new Error(`No se pudo leer la imagen remota: ${response.status} ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      bytes = new Uint8Array(arrayBuffer);
     } else {
-      console.log('[Supabase Upload] usando arrayBuffer desde FileSystem');
+      console.log('[Supabase Upload] usando ExpoFile para leer el archivo local');
+      const file = new ExpoFile(imageUri);
       const arrayBuffer = await file.arrayBuffer();
       bytes = new Uint8Array(arrayBuffer);
     }
 
-    const contentType = file.type || 'image/jpeg';
-    const extension = getImageExtension(imageUri, contentType);
-    const storageFileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+    const contentType = getMimeType(imageUri);
 
     console.log('[Supabase Upload] nombre final en Storage:', storageFileName);
     console.log('[Supabase Upload] content-type:', contentType);
@@ -97,17 +129,13 @@ export async function uploadDishImageToSupabase(imageUri: string, imageBase64?: 
 
     console.log('[Supabase Upload] respuesta upload:', data);
 
-    const { data: publicUrlData } = supabase.storage.from(DISH_IMAGE_BUCKET).getPublicUrl(storageFileName);
-    const publicUrl = publicUrlData.publicUrl;
+    const publicUrlResponse = supabase.storage.from(DISH_IMAGE_BUCKET).getPublicUrl(storageFileName);
+    const publicUrl = publicUrlResponse.data.publicUrl;
 
     console.log('[Supabase Upload] publicUrl:', publicUrl);
 
     if (!publicUrl) {
       throw new Error('No se pudo obtener la URL pública de la imagen.');
-    }
-
-    if (publicUrl.startsWith('file://')) {
-      throw new Error('La URL pública no puede ser una ruta local file://.');
     }
 
     return publicUrl;

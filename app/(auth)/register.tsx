@@ -13,7 +13,7 @@ export default function RegisterScreen() {
       <AuthForm mode="register" />
 
       <View className="mt-5 flex-row items-center justify-center gap-2">
-        <Text className="text-sm text-gray-600">¿Ya tienes cuenta?</Text>
+        <Text className="text-sm text-[#006491]">¿Ya tienes cuenta?</Text>
         <Link href="/login" asChild>
           <Pressable>
             <Text className="text-sm font-bold text-[#006491]">Iniciar sesión</Text>

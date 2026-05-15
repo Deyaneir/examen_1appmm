@@ -94,12 +94,12 @@ export function AuthShell({ eyebrow, title, description, children }: AuthShellPr
             <Text className="max-w-[18rem] text-4xl font-black leading-tight text-[#1A1A1A]">
               {title}
             </Text>
-            <Text className="mt-4 max-w-[22rem] text-base leading-7 text-gray-600">
+            <Text className="mt-4 max-w-[22rem] text-base leading-7 text-[#006491]">
               {description}
             </Text>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.duration(450).delay(120)} className="rounded-4xl border border-white/10 bg-slate-900/90 p-5 shadow-2xl shadow-black/40">
+          <Animated.View entering={FadeInDown.duration(450).delay(120)} className="rounded-4xl border border-gray-200 bg-white p-5 shadow-xl shadow-gray-200/50">
             {children}
           </Animated.View>
         </ScrollView>

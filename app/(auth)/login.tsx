@@ -13,7 +13,7 @@ export default function LoginScreen() {
       <AuthForm mode="login" />
 
       <View className="mt-5 flex-row items-center justify-center gap-2">
-        <Text className="text-sm text-gray-600">¿Todavía no tienes cuenta?</Text>
+        <Text className="text-sm text-[#006491]">¿Todavía no tienes cuenta?</Text>
         <Link href="/register" asChild>
           <Pressable>
             <Text className="text-sm font-bold text-[#006491]">Crear cuenta</Text>

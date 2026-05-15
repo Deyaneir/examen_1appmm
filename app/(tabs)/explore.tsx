@@ -1,85 +1,185 @@
-import { Image } from 'expo-image';
+import { Link } from 'expo-router';
 import { ScrollView, Text, View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
-import { ExternalLink } from '@/components/external-link';
-import { Collapsible } from '@/components/ui/collapsible';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export default function TabTwoScreen() {
+export default function ExploreScreen() {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+
   return (
-    <ScrollView className="flex-1 bg-slate-950">
-      <View className="px-5 pb-10 pt-16">
-        <View className="mb-6 rounded-4xl border border-white/10 bg-white/6 p-6">
-          <Text className="text-xs font-semibold uppercase tracking-[0.4em] text-cyan-300">
-            Explore
+    <ScrollView
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="px-6 pt-16 pb-10">
+        <Animated.View
+          entering={FadeInUp.duration(500)}
+          className="rounded-3xl border p-6 shadow-lg mb-8"
+          style={{
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            shadowColor: colors.shadow,
+          }}
+        >
+          <Text
+            className="text-xs font-semibold uppercase tracking-[0.4em]"
+            style={{ color: colors.primary }}
+          >
+            Explorar
           </Text>
-          <Text className="mt-3 text-4xl font-black text-white">
-            Uniwind en el proyecto
+          <Text
+            className="mt-3 text-3xl font-black leading-tight"
+            style={{ color: colors.text }}
+          >
+            Descubre Platos
           </Text>
-          <Text className="mt-4 text-base leading-7 text-slate-300">
-            Esta pantalla conserva el contenido de ejemplo pero ya está maquetada con utilidades de
-            Uniwind.
+          <Text
+            className="mt-4 text-base leading-7"
+            style={{ color: '#006491' }}
+          >
+            Explora una variedad de platos deliciosos registrados por la comunidad.
+            Encuentra inspiración culinaria y descubre nuevos sabores.
           </Text>
+        </Animated.View>
+
+        <View className="gap-4">
+          <Link href="/dishes/list" asChild>
+            <Animated.View entering={FadeInUp.duration(500).delay(100)}>
+              <View
+                className="rounded-2xl p-6 shadow-md active:opacity-90"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  shadowColor: colors.shadow,
+                }}
+              >
+                <View className="flex-row items-center gap-4">
+                  <View className="rounded-full bg-[#006491]/10 p-3">
+                    <IconSymbol name="fork.knife" size={28} color="#006491" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-lg font-bold" style={{ color: '#E31837' }}>Ver Todos los Platos</Text>
+                    <Text className="text-sm mt-1" style={{ color: '#006491' }}>
+                      Explora el catálogo completo de platos disponibles
+                    </Text>
+                  </View>
+                  <IconSymbol name="arrow.right" size={24} color="#E31837" />
+                </View>
+              </View>
+            </Animated.View>
+          </Link>
+
+          <Link href="/map" asChild>
+            <Animated.View entering={FadeInUp.duration(500).delay(200)}>
+              <View
+                className="rounded-2xl p-6 shadow-md active:opacity-90"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  shadowColor: colors.shadow,
+                }}
+              >
+                <View className="flex-row items-center gap-4">
+                  <View className="rounded-full bg-[#006491]/10 p-3">
+                    <IconSymbol name="map.fill" size={28} color="#006491" />
+                  </View>
+                  <View className="flex-1">
+                    <Text
+                      className="text-lg font-bold"
+                      style={{ color: '#E31837' }}
+                    >
+                      Explorar platos en el mapa
+                    </Text>
+                    <Text
+                      className="text-sm mt-1"
+                      style={{ color: '#006491' }}
+                    >
+                      Encuentra platos cerca de ti usando el mapa interactivo
+                    </Text>
+                  </View>
+                  <IconSymbol name="arrow.right" size={24} color="#E31837" />
+                </View>
+              </View>
+            </Animated.View>
+          </Link>
+
+          <Link href="/dishes/register" asChild>
+            <Animated.View entering={FadeInUp.duration(500).delay(300)}>
+              <View
+                className="rounded-2xl p-6 shadow-md active:opacity-90"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  shadowColor: colors.shadow,
+                }}
+              >
+                <View className="flex-row items-center gap-4">
+                  <View className="rounded-full bg-[#006491]/10 p-3">
+                    <IconSymbol name="camera.fill" size={28} color="#006491" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-lg font-bold" style={{ color: '#E31837' }}>Registrar Plato</Text>
+                    <Text className="text-sm mt-1" style={{ color: '#006491' }}>
+                      Comparte tu plato favorito con la comunidad
+                    </Text>
+                  </View>
+                  <IconSymbol name="arrow.right" size={24} color="#E31837" />
+                </View>
+              </View>
+            </Animated.View>
+          </Link>
         </View>
 
-        <View className="mb-6 items-center rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-          <IconSymbol size={120} color="#22d3ee" name="chevron.left.forwardslash.chevron.right" />
-        </View>
-
-      <Collapsible title="File-based routing">
-        <Text className="text-slate-300">
-          This app has two screens: <Text className="font-semibold text-white">app/(tabs)/index.tsx</Text>{' '}
-          and <Text className="font-semibold text-white">app/(tabs)/explore.tsx</Text>.
-        </Text>
-        <Text className="mt-3 text-slate-300">
-          The layout file in <Text className="font-semibold text-white">app/(tabs)/_layout.tsx</Text>{' '}
-          sets up the tab navigator.
-        </Text>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <Text className="mt-3 text-base font-semibold text-cyan-300">Learn more</Text>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <Text className="text-slate-300">
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <Text className="font-semibold text-white">w</Text> in the terminal running this project.
-        </Text>
-      </Collapsible>
-      <Collapsible title="Images">
-        <Text className="text-slate-300">
-          For static images, you can use the <Text className="font-semibold text-white">@2x</Text> and{' '}
-          <Text className="font-semibold text-white">@3x</Text> suffixes to provide files for
-          different screen densities.
-        </Text>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          className="mx-auto mt-4 h-24 w-24"
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <Text className="mt-3 text-base font-semibold text-cyan-300">Learn more</Text>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <Text className="text-slate-300">
-          This template has light and dark mode support. The{' '}
-          <Text className="font-semibold text-white">useColorScheme()</Text> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </Text>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <Text className="mt-3 text-base font-semibold text-cyan-300">Learn more</Text>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <Text className="text-slate-300">
-          This template includes an example of an animated component. The{' '}
-          <Text className="font-semibold text-white">components/HelloWave.tsx</Text> component uses
-          react-native-reanimated to create a waving hand animation.
-        </Text>
-        <Text className="mt-3 text-slate-300">
-          The <Text className="font-semibold text-white">components/ParallaxScrollView.tsx</Text>{' '}
-          component provides a parallax effect for the header image.
-        </Text>
-      </Collapsible>
+        <Animated.View
+          entering={FadeInUp.duration(500).delay(400)}
+          className="mt-8 rounded-3xl p-6"
+          style={{
+            backgroundColor: colors.gray50,
+            borderColor: colors.border,
+            borderWidth: 1,
+          }}
+        >
+          <Text
+            className="text-center text-lg font-bold mb-2"
+            style={{ color: colors.text }}
+          >
+            ¿Qué puedes hacer?
+          </Text>
+          <View className="gap-3">
+            <View className="flex-row items-center gap-3">
+              <IconSymbol name="location.fill" size={20} color="#006491" />
+              <Text style={{ color: '#006491' }}>
+                Registra platos con ubicación GPS precisa
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-3">
+              <IconSymbol name="camera.fill" size={20} color="#006491" />
+              <Text style={{ color: '#006491' }}>
+                Sube fotos de alta calidad a Supabase Storage
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-3">
+              <IconSymbol name="map.fill" size={20} color="#006491" />
+              <Text style={{ color: '#006491' }}>
+                Explora platos en un mapa interactivo
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-3">
+              <IconSymbol name="checkmark" size={20} color="#006491" />
+              <Text style={{ color: '#006491' }}>
+                Experiencia rápida y moderna con animaciones
+              </Text>
+            </View>
+          </View>
+        </Animated.View>
       </View>
     </ScrollView>
   );

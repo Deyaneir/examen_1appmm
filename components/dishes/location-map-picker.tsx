@@ -8,8 +8,8 @@ type LocationMapPickerProps = {
   onSelectLocation: (location: { latitude: number; longitude: number }) => void;
 };
 
-const DEFAULT_LATITUDE = 4.711;
-const DEFAULT_LONGITUDE = -74.0721;
+const DEFAULT_LATITUDE = -0.1807;
+const DEFAULT_LONGITUDE = -78.4678;
 
 export function LocationMapPicker({ latitude, longitude, onSelectLocation }: LocationMapPickerProps) {
   const initialLatitude = Number.isFinite(latitude ?? NaN) ? latitude! : DEFAULT_LATITUDE;
@@ -30,7 +30,7 @@ export function LocationMapPicker({ latitude, longitude, onSelectLocation }: Loc
           }
 
           body {
-            background: #0f172a;
+            background: #F3F4F6;
           }
 
           .hint {
@@ -41,8 +41,8 @@ export function LocationMapPicker({ latitude, longitude, onSelectLocation }: Loc
             top: 12px;
             padding: 12px 14px;
             border-radius: 16px;
-            background: rgba(15, 23, 42, 0.82);
-            color: white;
+            background: rgba(255, 255, 255, 0.95);
+            color: black;
             font-family: sans-serif;
             font-size: 14px;
             line-height: 1.4;

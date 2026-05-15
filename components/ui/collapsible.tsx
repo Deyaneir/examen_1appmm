@@ -12,7 +12,7 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
       <Pressable className="flex-row items-center gap-2" onPress={() => setIsOpen((value) => !value)}>
         <Text className="text-lg font-bold text-slate-500">{isOpen ? '⌄' : '›'}</Text>
 
-        <ThemedText type="defaultSemiBold" className="text-slate-900 dark:text-white">
+        <ThemedText type="defaultSemiBold" className="text-black">
           {title}
         </ThemedText>
       </Pressable>

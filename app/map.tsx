@@ -1,6 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
+
+const DEFAULT_LATITUDE = -0.1807;
+const DEFAULT_LONGITUDE = -78.4678;
 
 export default function MapScreen() {
   const params = useLocalSearchParams();
@@ -12,20 +15,12 @@ export default function MapScreen() {
   const latitude = Number(latitudeParam);
   const longitude = Number(longitudeParam);
   const dishName = String(nameParam || 'Ubicación');
-  const isValidPosition = Number.isFinite(latitude) && Number.isFinite(longitude);
+  
+  // Use default coordinates if invalid
+  const finalLatitude = Number.isFinite(latitude) ? latitude : DEFAULT_LATITUDE;
+  const finalLongitude = Number.isFinite(longitude) ? longitude : DEFAULT_LONGITUDE;
 
-  if (!isValidPosition) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 8 }}>No se pudo cargar el mapa</Text>
-        <Text style={{ textAlign: 'center', color: '#475569' }}>
-          Faltan coordenadas válidas para mostrar la ubicación.
-        </Text>
-      </View>
-    );
-  }
-
-  const html = `
+const html = `
   <!DOCTYPE html>
   <html>
   <head>
@@ -60,25 +55,51 @@ export default function MapScreen() {
         top: 12px;
         padding: 12px 14px;
         border-radius: 16px;
-        background: rgba(15, 23, 42, 0.88);
-        color: #fff;
+        background: white;
+        color: black;
         font-family: sans-serif;
         font-size: 14px;
         line-height: 1.45;
-        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.24);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        border: 2px solid #006491;
+      }
+
+      #retry-btn {
+        display: none;
+        margin-top: 8px;
+        padding: 8px 16px;
+        background: white;
+        color: #006491;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        cursor: pointer;
       }
     </style>
   </head>
 
   <body>
-    <div id="route-info">Calculando tiempo desde tu ubicación actual...</div>
+    <div id="route-info">Cargando mapa en Quito...</div>
+    <button id="retry-btn" onclick="requestLocation()">Solicitar ubicación</button>
     <div id="map"></div>
 
     <script>
-      const destinationLat = ${latitude};
-      const destinationLng = ${longitude};
+      const destinationLat = ${finalLatitude};
+      const destinationLng = ${finalLongitude};
       const destinationName = ${JSON.stringify(dishName)};
       const routeInfo = document.getElementById('route-info');
+      const retryBtn = document.getElementById('retry-btn');
+
+      // Request permission first
+      if (navigator.permissions) {
+        navigator.permissions.query({name:'geolocation'}).then(function(result) {
+          if (result.state === 'granted') {
+            requestLocation();
+          } else if (result.state === 'prompt') {
+            updateRouteInfo('Presiona el botón para permitir ubicación', true);
+          }
+        });
+      }
 
       const map = L.map('map').setView([destinationLat, destinationLng], 15);
 
@@ -94,9 +115,14 @@ export default function MapScreen() {
       let routeLayer = null;
       let originMarker = null;
 
-      function updateRouteInfo(message) {
+      function updateRouteInfo(message, showButton = false) {
         if (routeInfo) {
-          routeInfo.textContent = message;
+          routeInfo.innerHTML = message;
+          if (showButton) {
+            retryBtn.style.display = 'block';
+          } else {
+            retryBtn.style.display = 'none';
+          }
         }
       }
 
@@ -170,43 +196,58 @@ export default function MapScreen() {
           );
         } catch (error) {
           console.error('Error calculando ruta:', error);
-          updateRouteInfo('No se pudo calcular la ruta desde tu ubicación actual.');
+          updateRouteInfo('No se pudo calcular la ruta. Intenta de nuevo.', true);
         }
       }
 
-      if (!navigator.geolocation) {
-        updateRouteInfo('Tu navegador no permite obtener ubicación. Solo se muestra el destino.');
-      } else {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const startLat = position.coords.latitude;
-            const startLng = position.coords.longitude;
-            drawRouteFromUserLocation(startLat, startLng);
-          },
-          (error) => {
-            console.error('Error obteniendo ubicación actual:', error);
-            updateRouteInfo('No se pudo obtener tu ubicación actual. Activa el permiso de ubicación para calcular el tiempo.');
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 30000,
-          }
-        );
+      function requestLocation() {
+        if (!navigator.geolocation) {
+          updateRouteInfo('Tu dispositivo no soporta geolocalización', false);
+        } else {
+          updateRouteInfo('Solicitando permiso de ubicación...', false);
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const startLat = position.coords.latitude;
+              const startLng = position.coords.longitude;
+              drawRouteFromUserLocation(startLat, startLng);
+            },
+            (error) => {
+              console.error('Error obteniendo ubicación:', error.code, error.message);
+              let msg = 'No se pudo obtener tu ubicación.';
+              if (error.code === 1) msg = 'Permiso de ubicación denegado. Presiona el botón para intentar de nuevo.';
+              else if (error.code === 2) msg = 'Ubicación no disponible en este momento.';
+              else if (error.code === 3) msg = 'Tiempo de espera agotado. Intenta de nuevo.';
+              updateRouteInfo(msg, true);
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 0,
+            }
+          );
+        }
       }
+
+      // Auto request on load
+      setTimeout(requestLocation, 500);
     </script>
   </body>
   </html>
-  `;
+`;
 
   return (
     <View style={{ flex: 1 }}>
       <WebView
         source={{ html }}
         originWhitelist={['*']}
-        javaScriptEnabled
-        domStorageEnabled
-        geolocationEnabled
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        geolocationEnabled={true}
+        allowFileAccess={true}
+        allowUniversalAccessFromFileURLs={true}
+        mixedContentMode="always"
+        setSupportMultipleWindows={true}
+        useWebkit={true}
       />
     </View>
   );

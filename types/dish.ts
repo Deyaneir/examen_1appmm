@@ -2,6 +2,9 @@ export type Dish = {
   id: string;
   user_id: string;
   name: string;
+  description?: string;
+  category?: string;
+  price?: number;
   photo_uri: string | null;
   city: string | null;
   country: string | null;

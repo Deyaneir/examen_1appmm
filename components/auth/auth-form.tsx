@@ -164,9 +164,9 @@ export function AuthForm({ mode }: AuthFormProps) {
           disabled={isSubmitting}
           className="mt-2 flex-row items-center justify-center rounded-2xl bg-[#E31837] px-5 py-4 active:bg-[#E31837]/80 disabled:opacity-70">
           {isSubmitting ? (
-            <ActivityIndicator color="white" />
+            <ActivityIndicator color="black" />
           ) : (
-            <Text className="text-base font-extrabold text-white">
+            <Text className="text-base font-extrabold text-black">
               {isRegister ? 'Crear cuenta' : 'Iniciar sesión'}
             </Text>
           )}

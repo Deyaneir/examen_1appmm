@@ -23,15 +23,15 @@ function Field({
 }) {
   return (
     <View className="mb-3">
-      <Text className="mb-2 text-sm font-semibold text-slate-200">{label}</Text>
+      <Text className="mb-2 text-sm font-semibold text-gray-700">{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#64748b"
+        placeholderTextColor="#9CA3AF"
         keyboardType={keyboardType}
         autoCorrect={false}
-        className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-4 text-base text-white focus:border-cyan-400"
+        className="rounded-2xl border border-gray-200 bg-white px-4 py-4 text-base text-gray-800 focus:border-[#006491]"
       />
     </View>
   );
@@ -110,9 +110,9 @@ export function DishForm({ onSubmit, isSubmitting = false }: DishFormProps) {
   }
 
   return (
-    <View className="rounded-3xl border border-white/10 bg-white/6 p-5">
-      <Text className="text-lg font-black text-white">Nuevo plato</Text>
-      <Text className="mt-2 text-sm leading-6 text-slate-300">
+    <View className="rounded-3xl border border-gray-200 bg-white p-5 shadow-lg shadow-gray-200/50">
+      <Text className="text-lg font-black text-gray-800">Nuevo plato</Text>
+      <Text className="mt-2 text-sm leading-6 text-[#006491]">
         Los platos se guardan localmente con AsyncStorage y el último que agregues aparece primero.
       </Text>
 
@@ -143,28 +143,28 @@ export function DishForm({ onSubmit, isSubmitting = false }: DishFormProps) {
           onChangeText={setImageUrl}
           placeholder="https://..."
         />
-        <Pressable onPress={getCurrentLocation} className="mt-3 rounded-2xl bg-blue-500 px-4 py-4">
-          <Text className="text-center font-bold text-white">Obtener ubicación actual</Text>
+        <Pressable onPress={getCurrentLocation} className="mt-3 rounded-2xl bg-[#006491] px-4 py-4">
+          <Text className="text-center font-bold text-black">Obtener ubicación actual</Text>
         </Pressable>
 
         {latitude !== null && longitude !== null ? (
-          <Text className="mt-2 text-sm text-green-400">
+          <Text className="mt-2 text-sm text-green-600">
             Ubicación guardada: {latitude.toFixed(4)}, {longitude.toFixed(4)}
           </Text>
         ) : null}
       </View>
 
       {errorMessage ? (
-        <View className="mb-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3">
-          <Text className="text-sm leading-6 text-rose-100">{errorMessage}</Text>
+        <View className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+          <Text className="text-sm leading-6 text-red-800">{errorMessage}</Text>
         </View>
       ) : null}
 
       <Pressable
         onPress={handleSubmit}
         disabled={isSubmitting}
-        className="items-center rounded-2xl bg-cyan-400 px-5 py-4 active:bg-cyan-300 disabled:opacity-70">
-        <Text className="text-base font-extrabold text-slate-950">
+        className="items-center rounded-2xl bg-[#E31837] px-5 py-4 active:bg-[#c41530] disabled:opacity-70">
+        <Text className="text-base font-extrabold text-black">
           {isSubmitting || isSaving ? 'Guardando...' : 'Agregar plato'}
         </Text>
       </Pressable>

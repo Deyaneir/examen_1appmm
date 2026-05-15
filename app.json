@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sally-williams.Examen-1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Esta app necesita tu ubicación para mostrar distancias y rutas.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Esta app necesita tu ubicación para mostrar distancias y rutas."
+      }
     },
     "android": {
       "adaptiveIcon": {

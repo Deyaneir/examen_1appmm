@@ -1,131 +1,245 @@
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useCurrentLocation } from '@/hooks/use-current-location';
 import { useDishes } from '@/hooks/use-dishes';
 
 export default function DishDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { dishes } = useDishes();
+  const { currentLocation, getDistanceTo } = useCurrentLocation();
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
 
   const dishId = Array.isArray(params.id) ? params.id[0] : params.id;
   const dish = dishes.find((item) => item.id === dishId);
 
   if (!dish) {
     return (
-      <View className="flex-1 items-center justify-center bg-white px-6">
-        <Text className="text-xl font-black text-[#1A1A1A]">No se encontró el plato</Text>
-        <Text className="mt-2 text-center text-gray-500">
-          El registro puede haber sido eliminado o la ruta no es válida.
-        </Text>
-        <Pressable
-          onPress={() => router.back()}
-          className="mt-6 rounded-2xl bg-[#006491] px-5 py-3"
+      <View
+        className="flex-1 items-center justify-center px-6"
+        style={{ backgroundColor: colors.background }}
+      >
+        <Animated.View
+          entering={FadeInUp.duration(500)}
+          className="items-center"
         >
-          <Text className="font-bold text-white">Volver</Text>
-        </Pressable>
+          <IconSymbol name="info.circle" size={80} color="#006491" />
+          <Text
+            className="text-xl font-bold text-center mb-2 mt-4"
+            style={{ color: colors.text }}
+          >
+            Plato no encontrado
+          </Text>
+          <Pressable
+            onPress={() => router.back()}
+            className="rounded-2xl px-6 py-3 shadow-md active:opacity-90"
+            style={{
+              backgroundColor: colors.primary,
+              shadowColor: colors.shadow,
+            }}
+          >
+            <Text className="font-bold text-black">Volver</Text>
+          </Pressable>
+        </Animated.View>
       </View>
     );
   }
 
   const hasLocation = dish.latitude !== null && dish.longitude !== null;
+  const distanceInfo = hasLocation && currentLocation
+    ? getDistanceTo(dish.latitude!, dish.longitude!)
+    : null;
 
   return (
-    <ScrollView className="flex-1 bg-white">
-      <View className="px-5 pt-12 pb-10">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1 pr-4">
-            <Text className="text-xs font-semibold uppercase tracking-[0.4em] text-[#006491]">
-              Detalle
+    <ScrollView
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="pb-10">
+        {/* Hero Image - Domino's Style */}
+        <Animated.View
+          entering={FadeInUp.duration(500)}
+          className="relative h-96 overflow-hidden"
+        >
+          {dish.photo_uri ? (
+            <Image
+              source={{ uri: dish.photo_uri }}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
+              onError={(error) => {
+                console.warn('[Dish Detail] error cargando imagen:', error.nativeEvent);
+              }}
+            />
+          ) : (
+            <View
+              className="h-full w-full items-center justify-center"
+              style={{ backgroundColor: colors.gray200 }}
+            >
+              <IconSymbol name="fork.knife" size={80} color="#006491" />
+            </View>
+          )}
+
+          {/* Back Button - Overlay */}
+          <Pressable
+            onPress={() => router.push('/dishes/list')}
+            className="absolute top-6 left-6 rounded-full p-3 z-50"
+            style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}
+          >
+            <IconSymbol name="close" size={24} color="#1A1A1A" />
+          </Pressable>
+        </Animated.View>
+
+        {/* Content */}
+        <View className="px-6 pt-8">
+          {/* Title & Category */}
+          <Animated.View
+            entering={FadeInDown.duration(500).delay(100)}
+            className="mb-6"
+          >
+            <Text
+              className="text-xs font-bold uppercase tracking-wider mb-2"
+              style={{ color: colors.primary }}
+            >
+              Plato Especial
             </Text>
-            <Text className="mt-2 text-3xl font-black leading-tight text-[#1A1A1A]">
+            <Text
+              className="text-4xl font-black leading-tight"
+              style={{ color: '#1A1A1A' }}
+            >
               {dish.name}
             </Text>
-          </View>
+            {dish.category && (
+              <Text
+                className="text-sm mt-2 font-semibold"
+                style={{ color: '#006491' }}
+              >
+                {dish.category}
+              </Text>
+            )}
+          </Animated.View>
 
-          <Pressable
-            onPress={() => router.back()}
-            className="rounded-full bg-gray-200 p-3 active:bg-gray-300"
+          {/* Info Grid - Domino's Style */}
+          <Animated.View
+            entering={FadeInDown.duration(500).delay(150)}
+            className="flex-row gap-3 mb-6"
           >
-            <Text className="text-xl text-[#1A1A1A]">✕</Text>
-          </Pressable>
-        </View>
-
-        <View className="mt-6 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-lg">
-          <View className="h-72 bg-gray-100">
-            {dish.photo_uri ? (
-              <Image source={{ uri: dish.photo_uri }} className="h-full w-full" contentFit="cover" />
-            ) : (
-              <View className="h-full w-full items-center justify-center bg-gray-100">
-                <Text className="text-5xl">🍽️</Text>
+            {distanceInfo && (
+              <View
+                className="flex-1 rounded-2xl p-4 border"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.primary,
+                  borderWidth: 2,
+                }}
+              >
+                <Text
+                  className="text-xs font-bold uppercase"
+                  style={{ color: colors.primary }}
+                >
+                  Distancia
+                </Text>
+                <Text
+                  className="text-2xl font-black mt-1"
+                  style={{ color: '#1A1A1A' }}
+                >
+                  {distanceInfo.distance} km
+                </Text>
+                <View className="flex-row items-center gap-1 mt-2">
+                  <IconSymbol name="info.circle" size={14} color="#006491" />
+                  <Text className="text-xs" style={{ color: '#006491' }}>
+                    {distanceInfo.timeFormatted}
+                  </Text>
+                </View>
               </View>
             )}
-          </View>
 
-          <View className="p-5">
-            <Text className="text-lg font-black text-[#1A1A1A]">Información del plato</Text>
-
-            <View className="mt-4 gap-3">
-              <View className="rounded-2xl bg-gray-50 px-4 py-3">
-                <Text className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                  Ubicación
+            {dish.price !== undefined && (
+              <View
+                className="flex-1 rounded-2xl p-4 border"
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.success,
+                  borderWidth: 2,
+                }}
+              >
+                <Text
+                  className="text-xs font-bold uppercase"
+                  style={{ color: colors.success }}
+                >
+                  Precio
                 </Text>
-                <Text className="mt-1 text-base font-semibold text-gray-800">
-                  {hasLocation
-                    ? dish.city
-                      ? `${dish.city}${dish.country ? ', ' + dish.country : ''}`
-                      : 'Ubicación registrada'
-                    : 'Sin ubicación registrada'}
+                <Text
+                  className="text-2xl font-black mt-1"
+                  style={{ color: colors.success }}
+                >
+                  ${dish.price.toFixed(2)}
                 </Text>
               </View>
+            )}
+          </Animated.View>
 
-              {dish.description ? (
-                <View className="rounded-2xl bg-gray-50 px-4 py-3">
-                  <Text className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                    Descripción
-                  </Text>
-                  <Text className="mt-1 text-base text-gray-800">{dish.description}</Text>
-                </View>
-              ) : null}
+          {/* Description */}
+          {dish.description && (
+            <Animated.View
+              entering={FadeInDown.duration(500).delay(200)}
+              className="mb-6 rounded-2xl p-4"
+              style={{ backgroundColor: colors.gray50 }}
+            >
+              <Text className="text-sm" style={{ color: colors.text }}>
+                {dish.description}
+              </Text>
+            </Animated.View>
+          )}
 
-              {dish.category || dish.price !== undefined ? (
-                <View className="flex-row gap-3">
-                  {dish.category ? (
-                    <View className="flex-1 rounded-2xl bg-gray-50 px-4 py-3">
-                      <Text className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                        Categoría
-                      </Text>
-                      <Text className="mt-1 text-base font-semibold text-gray-800">{dish.category}</Text>
-                    </View>
-                  ) : null}
+          {/* Location Card */}
+          {hasLocation && (
+            <Animated.View
+              entering={FadeInDown.duration(500).delay(250)}
+              className="mb-6 rounded-2xl p-4 border"
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderWidth: 1,
+              }}
+            >
+<View className="flex-row items-center gap-2 mb-2">
+                <IconSymbol name="location.fill" size={20} color="#E31837" />
+                <Text
+                  className="text-sm font-bold uppercase"
+                  style={{ color: '#000000' }}
+                >
+                  Ubicación
+                </Text>
+              </View>
+              <Text className="text-sm ml-6" style={{ color: '#1A1A1A' }}>
+                {dish.city}
+                {dish.country ? `, ${dish.country}` : ''}
+              </Text>
+              <View className="flex-row items-center gap-1 mt-2 ml-6">
+                <IconSymbol name="checkmark" size={12} color="#1A1A1A" />
+                <Text
+                  className="text-xs"
+                  style={{ color: '#1A1A1A' }}
+                >
+                  {dish.latitude?.toFixed(4)}, {dish.longitude?.toFixed(4)}
+                </Text>
+              </View>
+            </Animated.View>
+          )}
 
-                  {dish.price !== undefined ? (
-                    <View className="flex-1 rounded-2xl bg-gray-50 px-4 py-3">
-                      <Text className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                        Precio
-                      </Text>
-                      <Text className="mt-1 text-base font-semibold text-gray-800">
-                        ${dish.price.toFixed(2)}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              ) : null}
-
-              {hasLocation ? (
-                <View className="rounded-2xl bg-gray-50 px-4 py-3">
-                  <Text className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                    Coordenadas
-                  </Text>
-                  <Text className="mt-1 text-base font-semibold text-gray-800">
-                    {dish.latitude?.toFixed(6)}, {dish.longitude?.toFixed(6)}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-
-            {hasLocation ? (
+          {/* Actions */}
+          <Animated.View
+            entering={FadeInUp.duration(500).delay(300)}
+            className="gap-3 mb-8"
+          >
+            {hasLocation && (
               <Pressable
                 onPress={() =>
                   router.push({
@@ -137,29 +251,48 @@ export default function DishDetailScreen() {
                     },
                   })
                 }
-                className="mt-6 rounded-2xl bg-[#E31837] px-5 py-4 active:bg-[#E31837]/80"
+                className="rounded-2xl p-4 shadow-lg active:opacity-90"
+                style={{
+                  backgroundColor: colors.secondary,
+                  shadowColor: colors.shadow,
+                }}
               >
-                <Text className="text-center text-base font-extrabold text-white">Ver ubicación</Text>
+                <View className="flex-row items-center justify-center gap-2">
+                  <IconSymbol name="map.fill" size={20} color="black" />
+                  <Text className="text-base font-bold text-black">
+                    Ver en Mapa
+                  </Text>
+                </View>
               </Pressable>
-            ) : (
-              <View className="mt-6 rounded-2xl border border-dashed border-gray-300 px-5 py-4">
-                <Text className="text-center text-sm text-gray-500">
-                  Este plato no tiene coordenadas guardadas.
-                </Text>
-              </View>
             )}
 
-            <Text className="mt-6 text-xs text-gray-400">
-              Registrado el{' '}
-              {new Date(dish.created_at).toLocaleDateString('es-CO', {
-                year: 'numeric',
+            <Pressable
+              onPress={() => router.back()}
+              className="rounded-2xl p-4 shadow-md active:opacity-90"
+              style={{
+                backgroundColor: '#006491',
+                shadowColor: colors.shadow,
+              }}
+            >
+              <Text
+                className="text-base font-bold text-center"
+                style={{ color: '#000000' }}
+              >
+                ← Volver a la lista
+              </Text>
+            </Pressable>
+          </Animated.View>
+
+          {/* Timestamp */}
+          <View className="items-center pb-6">
+            <Text
+              className="text-xs"
+              style={{ color: '#006491' }}
+            >
+              Registrado{' '}
+              {new Date(dish.created_at).toLocaleDateString('es-ES', {
                 month: 'short',
                 day: 'numeric',
-              })}{' '}
-              a las{' '}
-              {new Date(dish.created_at).toLocaleTimeString('es-CO', {
-                hour: '2-digit',
-                minute: '2-digit',
               })}
             </Text>
           </View>
