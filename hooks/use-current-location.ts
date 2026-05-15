@@ -1,6 +1,28 @@
 import { useEffect, useState } from 'react';
 
-import { calculateDistance, estimateTravelTime, getLocationData, LocationData } from './use-location';
+import { calculateDistance, getLocationData, LocationData } from './use-location';
+
+async function getRealTravelTime(
+  startLat: number,
+  startLng: number,
+  endLat: number,
+  endLng: number
+): Promise<{ distanceKm: number; timeMinutes: number } | null> {
+  try {
+    const response = await fetch(
+      `https://router.project-osrm.org/route/v1/foot/${startLng},${startLat};${endLng},${endLat}?overview=false`
+    );
+    const data = await response.json();
+    const route = data.routes?.[0];
+    if (!route) return null;
+    const distanceKm = route.distance / 1000;
+    const realTimeMinutes = Math.round((route.duration / 60) * 3.5);
+    return { distanceKm, timeMinutes: realTimeMinutes };
+  } catch (error) {
+    console.warn('Error OSRM:', error);
+    return null;
+  }
+}
 
 export interface DistanceInfo {
   distance: number;
@@ -36,12 +58,34 @@ export function useCurrentLocation() {
     refreshLocation();
   }, []);
 
-  const getDistanceTo = (
+  const getDistanceTo = async (
     targetLat: number,
-    targetLon: number,
-    mode: 'walking' | 'driving' = 'driving'
-  ): DistanceInfo | null => {
+    targetLon: number
+  ): Promise<DistanceInfo | null> => {
     if (!currentLocation) return null;
+
+    const realTime = await getRealTravelTime(
+      currentLocation.latitude,
+      currentLocation.longitude,
+      targetLat,
+      targetLon
+    );
+
+    if (realTime) {
+      let timeFormatted: string;
+      if (realTime.timeMinutes < 60) {
+        timeFormatted = `${realTime.timeMinutes} min`;
+      } else {
+        const hours = Math.floor(realTime.timeMinutes / 60);
+        const minutes = realTime.timeMinutes % 60;
+        timeFormatted = minutes > 0 ? `${hours}h ${minutes}min` : `${hours}h`;
+      }
+      return {
+        distance: Math.round(realTime.distanceKm * 10) / 10,
+        timeMinutes: realTime.timeMinutes,
+        timeFormatted,
+      };
+    }
 
     const distance = calculateDistance(
       currentLocation.latitude,
@@ -49,8 +93,7 @@ export function useCurrentLocation() {
       targetLat,
       targetLon
     );
-
-    const timeMinutes = estimateTravelTime(distance, mode);
+    const timeMinutes = Math.round(distance / 5 * 60);
 
     let timeFormatted: string;
     if (timeMinutes < 60) {
@@ -62,7 +105,7 @@ export function useCurrentLocation() {
     }
 
     return {
-      distance: Math.round(distance * 10) / 10, // Round to 1 decimal
+      distance: Math.round(distance * 10) / 10,
       timeMinutes,
       timeFormatted,
     };

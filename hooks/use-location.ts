@@ -19,7 +19,7 @@ export async function getLocationData(): Promise<LocationData | null> {
 
     // Get current location
     const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
+      accuracy: Location.Accuracy.BestForNavigation,
     });
 
     const { latitude, longitude } = location.coords;

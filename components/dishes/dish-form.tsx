@@ -56,7 +56,9 @@ export function DishForm({ onSubmit, isSubmitting = false }: DishFormProps) {
       return;
     }
 
-    const location = await Location.getCurrentPositionAsync({});
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.BestForNavigation,
+    });
 
     setLatitude(location.coords.latitude);
     setLongitude(location.coords.longitude);

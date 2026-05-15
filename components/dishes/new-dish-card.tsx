@@ -85,7 +85,9 @@ export function NewDishCard({ onSuccess }: NewDishCardProps) {
     }
 
     try {
-      const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.BestForNavigation,
+      });
 
       setSelectedLocation({
         latitude: location.coords.latitude,

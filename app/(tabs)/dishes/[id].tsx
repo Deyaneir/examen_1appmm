@@ -1,11 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useEffect, useState } from 'react';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useCurrentLocation } from '@/hooks/use-current-location';
+import { useCurrentLocation, DistanceInfo } from '@/hooks/use-current-location';
 import { useDishes } from '@/hooks/use-dishes';
 
 export default function DishDetailScreen() {
@@ -18,6 +19,14 @@ export default function DishDetailScreen() {
 
   const dishId = Array.isArray(params.id) ? params.id[0] : params.id;
   const dish = dishes.find((item) => item.id === dishId);
+
+  const [distanceInfo, setDistanceInfo] = useState<DistanceInfo | null>(null);
+
+  useEffect(() => {
+    if (dish?.latitude && dish?.longitude && currentLocation) {
+      getDistanceTo(dish.latitude, dish.longitude).then(setDistanceInfo);
+    }
+  }, [dish?.latitude, dish?.longitude, currentLocation]);
 
   if (!dish) {
     return (
@@ -52,9 +61,6 @@ export default function DishDetailScreen() {
   }
 
   const hasLocation = dish.latitude !== null && dish.longitude !== null;
-  const distanceInfo = hasLocation && currentLocation
-    ? getDistanceTo(dish.latitude!, dish.longitude!)
-    : null;
 
   return (
     <ScrollView
